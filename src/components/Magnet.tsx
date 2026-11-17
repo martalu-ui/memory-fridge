@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState, type RefObject } from 'react'
 import { motion, useMotionValue } from 'framer-motion'
 import type { Memory } from '../types'
 import { colorClasses, iconForStyle } from '../lib/magnetStyles'
@@ -9,6 +9,7 @@ interface MagnetProps {
   onOpen: (memory: Memory) => void
   onPositionChange: (id: string, position: { x: number; y: number }) => void
   index: number
+  constraintsRef: RefObject<HTMLDivElement | null>
 }
 
 const HOVER_SHADOW =
@@ -20,23 +21,23 @@ export function Magnet({
   onOpen,
   onPositionChange,
   index,
+  constraintsRef,
 }: MagnetProps) {
-  const [basePos] = useState(memory.position)
-  const x = useMotionValue((basePos.x / 100) * canvasSize.width)
-  const y = useMotionValue((basePos.y / 100) * canvasSize.height)
+  // x/y hold the magnet's centre in pixels, measured from the canvas top-left.
+  const x = useMotionValue((memory.position.x / 100) * canvasSize.width)
+  const y = useMotionValue((memory.position.y / 100) * canvasSize.height)
   const [dragging, setDragging] = useState(false)
+
+  // Positions are stored as percentages: re-derive pixels whenever the saved
+  // position or the canvas size changes (e.g. the window is resized).
+  useEffect(() => {
+    if (dragging) return
+    x.set((memory.position.x / 100) * canvasSize.width)
+    y.set((memory.position.y / 100) * canvasSize.height)
+  }, [memory.position.x, memory.position.y, canvasSize.width, canvasSize.height, dragging, x, y])
 
   const { bg } = colorClasses(memory.colorKey)
   const icon = iconForStyle(memory.magnetStyle, memory.customIcon)
-
-  const pixelX = (basePos.x / 100) * canvasSize.width
-  const pixelY = (basePos.y / 100) * canvasSize.height
-  const dragConstraints = {
-    left: -pixelX,
-    right: canvasSize.width - pixelX,
-    top: -pixelY,
-    bottom: canvasSize.height - pixelY,
-  }
 
   function handleDragEnd() {
     setDragging(false)
@@ -52,7 +53,7 @@ export function Magnet({
       drag
       dragMomentum={false}
       dragElastic={0.14}
-      dragConstraints={dragConstraints}
+      dragConstraints={constraintsRef}
       style={{
         position: 'absolute',
         left: 0,
