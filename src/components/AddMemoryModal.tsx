@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { MagnetStyleKey, NewMemoryInput } from '../types'
 import { MAGNET_STYLES } from '../lib/magnetStyles'
+import { compressImage } from '../lib/image'
 
 interface AddMemoryModalProps {
   open: boolean
@@ -33,14 +34,16 @@ export function AddMemoryModal({ open, onClose, onSave }: AddMemoryModalProps) {
     onClose()
   }
 
-  function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      setForm((f) => ({ ...f, photo: reader.result as string }))
+    try {
+      const photo = await compressImage(file)
+      setForm((f) => ({ ...f, photo }))
+    } catch {
+      // Unreadable file: leave the current photo as it is.
     }
-    reader.readAsDataURL(file)
   }
 
   function handleSubmit(e: FormEvent) {

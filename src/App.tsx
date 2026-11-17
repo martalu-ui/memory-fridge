@@ -12,7 +12,7 @@ import { useElementSize } from './hooks/useElementSize'
 import type { Memory } from './types'
 
 function App() {
-  const { memories, addMemory, updatePosition } = useMemories()
+  const { memories, addMemory, updatePosition, saveFailed } = useMemories()
   const { isDark, toggle } = useDarkMode()
   const [modalOpen, setModalOpen] = useState(false)
   const [openMemory, setOpenMemory] = useState<Memory | null>(null)
@@ -34,12 +34,23 @@ function App() {
                 memory={memory}
                 index={index}
                 canvasSize={canvasSize}
+                constraintsRef={canvasRef}
                 onOpen={setOpenMemory}
                 onPositionChange={updatePosition}
               />
             ))}
         </Fridge>
       </main>
+
+      {saveFailed && (
+        <div
+          role="alert"
+          className="fixed left-1/2 top-5 z-50 w-[min(92vw,26rem)] -translate-x-1/2 rounded-2xl bg-blush px-4 py-3 text-center text-sm text-char shadow-card ring-1 ring-black/5"
+        >
+          The fridge is full: your latest changes could not be saved in this
+          browser. Try a smaller photo.
+        </div>
+      )}
 
       <AddButton onClick={() => setModalOpen(true)} />
 

@@ -20,9 +20,17 @@ function load(): Memory[] {
 
 export function useMemories() {
   const [memories, setMemories] = useState<Memory[]>(() => load())
+  const [saveFailed, setSaveFailed] = useState(false)
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(memories))
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(memories))
+      setSaveFailed(false)
+    } catch {
+      // Usually QuotaExceededError: keep the memories on screen and warn,
+      // instead of letting the error unmount the whole app.
+      setSaveFailed(true)
+    }
   }, [memories])
 
   const addMemory = useCallback((input: NewMemoryInput) => {
@@ -48,5 +56,5 @@ export function useMemories() {
     [],
   )
 
-  return { memories, addMemory, updatePosition }
+  return { memories, addMemory, updatePosition, saveFailed }
 }
